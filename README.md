@@ -1,15 +1,3 @@
-# back-ssh
+on the host:
 
-To install dependencies:
-
-```bash
-bun install
-```
-
-To run:
-
-```bash
-bun run 
-```
-
-This project was created using `bun init` in bun v1.3.2. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+`curl -X "POST" $BACK_SSH_ENDPOINT -H "Authorization: $BACK_SSH_AUTHORIZATION" -H "Content-Type: plain/text" -d 'hello'`

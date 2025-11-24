@@ -11,18 +11,21 @@ const port = Math.floor(Math.random() * (60000 - 40000 + 1)) + 40000
 const server = Bun.serve({
   port,
   async fetch(req) {
-    // Check authentication
-    const auth = req.headers.get("Authentication")
+    const auth = req.headers.get("Authorization")
     if (auth !== token) {
       return new Response("Unauthorized", { status: 401 })
     }
 
-    // Handle /execute route
     const url = new URL(req.url)
     if (url.pathname === "/execute" && req.method === "POST") {
-      const json = await req.json()
-      console.log("Received JSON:", json)
+      const text = await req.text
+      console.log(text)
       return new Response("OK", { status: 200 })
+    }
+
+    if (url.pathname === "/activate/fish" && req.method === "GET") {
+      const script = Bun.file("./on-client.fish")
+      return new Response(script, { status: 200, headers: { "Content-Type": "text/plain" } })
     }
 
     return new Response("Not Found", { status: 404 })
@@ -33,7 +36,7 @@ const server = Bun.serve({
 const args = process.argv.slice(2)
 
 // Create remote command that sets env vars and starts a shell
-const remoteCommand = `BACK_SSH_AUTHENTICATION=${token} BACK_SSH_PORT=${port} exec bash -l`
+const remoteCommand = `BACK_SSH_AUTHORIZATION=${token} BACK_SSH_ENDPOINT=http://localhost:${port} exec bash -l`
 
 // Add reverse tunnel argument and remote command
 const sshArgs = ["-R", `${port}:localhost:${port}`, "-t", "-o", `RemoteCommand=${remoteCommand}`, ...args]
