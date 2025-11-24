@@ -10,7 +10,7 @@ const port = Math.floor(Math.random() * (60000 - 40000 + 1)) + 40000
 
 const executeInputSchema = z.object({
   args: z.array(z.string()),
-  stdin: z.string().optional(),
+  stdin: z.string().optional().nullable(),
 })
 
 // Start HTTP server

@@ -7,5 +7,9 @@ function on-client
     read -z input
     set payload (printf "%s" $input | jq -Rs --args '{args: $ARGS.positional, stdin: (. | @base64)}' $argv)
   end
-  curl -fsSL -X "POST" $BACK_SSH_ENDPOINT/execute -H "Authorization: $BACK_SSH_AUTHORIZATION" -H "Content-Type: plain/text" -d "$payload" -H "Accept: text/plain" | jq
+  set response (curl -fsSL -X "POST" $BACK_SSH_ENDPOINT/execute -H "Authorization: $BACK_SSH_AUTHORIZATION" -H "Content-Type: plain/text" -d "$payload" -H "Accept: text/plain")
+  echo $response | jq -r '.stdout'
+  echo $response | jq -r '.stderr' >&2
+  set exit_code (echo $response | jq -r '.exitCode')
+  return $exit_code
 end
