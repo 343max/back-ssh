@@ -2,10 +2,16 @@
 
 import { spawn } from "bun"
 import { randomBytes } from "crypto"
+import z from "zod"
 
 // Generate random token and port
 const token = randomBytes(32).toString("hex")
 const port = Math.floor(Math.random() * (60000 - 40000 + 1)) + 40000
+
+const executeInputSchema = z.object({
+  args: z.array(z.string()),
+  stdin: z.string().optional(),
+})
 
 // Start HTTP server
 const server = Bun.serve({
@@ -18,9 +24,33 @@ const server = Bun.serve({
 
     const url = new URL(req.url)
     if (url.pathname === "/execute" && req.method === "POST") {
-      const text = await req.text
-      console.log(text)
-      return new Response("OK", { status: 200 })
+      const input = executeInputSchema.parse(await req.json())
+
+      const proc = spawn(input.args, {
+        stdin: input.stdin ? "pipe" : null,
+        stdout: "pipe",
+        stderr: "pipe",
+      })
+
+      if (input.stdin) {
+        const stdinData = Buffer.from(input.stdin, "base64")
+        proc.stdin?.write(stdinData)
+      }
+      proc.stdin?.end()
+
+      await proc.exited
+
+      return new Response(
+        JSON.stringify({
+          stdout: await proc.stdout?.text(),
+          stderr: await proc.stderr?.text(),
+          exitCode: proc.exitCode,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      )
     }
 
     if (url.pathname === "/activate/fish" && req.method === "GET") {
