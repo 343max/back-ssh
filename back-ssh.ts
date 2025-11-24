@@ -3,7 +3,10 @@
 import { spawn } from "bun"
 import { randomBytes } from "crypto"
 import z from "zod"
+// @ts-ignore
 import clientScript from "./on-client.fish" with { type: "text" }
+// @ts-ignore
+import setupDocumentation from "./SETUP.md" with { type: "text" }
 
 // Generate random token and port
 const token = randomBytes(32).toString("hex")
@@ -18,12 +21,17 @@ const executeInputSchema = z.object({
 const server = Bun.serve({
   port,
   async fetch(req) {
+    const url = new URL(req.url)
     const auth = req.headers.get("Authorization")
+
+    if (url.pathname === "/" && req.method === "GET") {
+      return new Response(setupDocumentation, { status: 200, headers: { "Content-Type": "text/markdown" } })
+    }
+
     if (auth !== token) {
       return new Response("Unauthorized", { status: 401 })
     }
 
-    const url = new URL(req.url)
     if (url.pathname === "/execute" && req.method === "POST") {
       const input = executeInputSchema.parse(await req.json())
 
