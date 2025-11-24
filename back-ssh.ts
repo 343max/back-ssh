@@ -3,6 +3,7 @@
 import { spawn } from "bun"
 import { randomBytes } from "crypto"
 import z from "zod"
+import clientScript from "./on-client.fish" with { type: "text" }
 
 // Generate random token and port
 const token = randomBytes(32).toString("hex")
@@ -65,8 +66,7 @@ const server = Bun.serve({
     }
 
     if (url.pathname === "/activate/fish" && req.method === "GET") {
-      const script = Bun.file("./on-client.fish")
-      return new Response(script, { status: 200, headers: { "Content-Type": "text/plain" } })
+      return new Response(clientScript, { status: 200, headers: { "Content-Type": "text/plain" } })
     }
 
     return new Response("Not Found", { status: 404 })
