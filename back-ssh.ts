@@ -26,31 +26,42 @@ const server = Bun.serve({
     if (url.pathname === "/execute" && req.method === "POST") {
       const input = executeInputSchema.parse(await req.json())
 
-      const proc = spawn(input.args, {
-        stdin: input.stdin ? "pipe" : null,
-        stdout: "pipe",
-        stderr: "pipe",
-      })
+      try {
+        const proc = spawn(input.args, {
+          stdin: input.stdin ? "pipe" : null,
+          stdout: "pipe",
+          stderr: "pipe",
+        })
 
-      if (input.stdin) {
-        const stdinData = Buffer.from(input.stdin, "base64")
-        proc.stdin?.write(stdinData)
-      }
-      proc.stdin?.end()
-
-      await proc.exited
-
-      return new Response(
-        JSON.stringify({
-          stdout: await proc.stdout?.text(),
-          stderr: await proc.stderr?.text(),
-          exitCode: proc.exitCode,
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
+        if (input.stdin) {
+          const stdinData = Buffer.from(input.stdin, "base64")
+          proc.stdin?.write(stdinData)
         }
-      )
+        proc.stdin?.end()
+
+        await proc.exited
+
+        return new Response(
+          JSON.stringify({
+            stdout: await proc.stdout?.text(),
+            stderr: await proc.stderr?.text(),
+            exitCode: proc.exitCode,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      } catch (error) {
+        return new Response(
+          JSON.stringify({
+            stdout: "",
+            stderr: (error as Error).message,
+            exitCode: 1,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )
+      }
     }
 
     if (url.pathname === "/activate/fish" && req.method === "GET") {
