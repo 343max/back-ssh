@@ -3,7 +3,7 @@
 Add this to your `config.fish`:
 
 ```sh
-if set -q BACK_SSH_ENDPOINT
-  curl -fsSL -H "Authorization: $BACK_SSH_AUTHORIZATION" $BACK_SSH_ENDPOINT/activate/fish | source
+if set -q ON_MY_BOX_ENDPOINT
+  curl -fsSL -H "Authorization: $ON_MY_BOX_AUTHORIZATION" $ON_MY_BOX_ENDPOINT/activate/fish | source
 end
 ```

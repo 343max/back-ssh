@@ -6,15 +6,13 @@ import z from "zod"
 import { readFile } from "fs/promises"
 import { join } from "path"
 // @ts-ignore
-import clientScriptFish from "./on-client.fish" with { type: "text" }
+import clientScriptFish from "./on-my-box.fn.fish" with { type: "text" }
 // @ts-ignore
 import setupDocumentation from "./SETUP.md" with { type: "text" }
 import { env } from "./src/env"
 import { findExecutables, resolvePath } from "./src/executables"
 
 const injectables = await findExecutables(env.ON_HOST_INJECTABLES)
-
-console.log(injectables)
 
 // Generate random token and port
 const token = randomBytes(32).toString("hex")
@@ -84,7 +82,7 @@ const server = Bun.serve({
     if (url.pathname === "/activate/fish" && req.method === "GET") {
       const aliases = injectables.map(
         (injectable) =>
-          `alias ${injectable}='curl -fsSL -H "Authorization: $BACK_SSH_AUTHORIZATION" $BACK_SSH_ENDPOINT/injectable/${injectable} | fish'`
+          `alias ${injectable}='curl -fsSL -H "Authorization: $ON_MY_BOX_AUTHORIZATION" $ON_MY_BOX_ENDPOINT/injectable/${injectable} | fish'`
       )
       const clientScript = [clientScriptFish, ...aliases].join("\n")
 
@@ -116,7 +114,7 @@ const server = Bun.serve({
 const args = process.argv.slice(2)
 
 // Create remote command that sets env vars and starts a shell
-const remoteCommand = `BACK_SSH_AUTHORIZATION=${token} BACK_SSH_ENDPOINT=http://localhost:${port} exec bash -l`
+const remoteCommand = `ON_MY_BOX_AUTHORIZATION=${token} ON_MY_BOX_ENDPOINT=http://localhost:${port} exec bash -l`
 
 // Add reverse tunnel argument and remote command
 const sshArgs = ["-R", `${port}:localhost:${port}`, "-t", "-o", `RemoteCommand=${remoteCommand}`, ...args]

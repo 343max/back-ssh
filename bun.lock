@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "back-ssh",
+      "name": "on-my-box",
       "dependencies": {
         "zod": "^4.1.13",
       },
