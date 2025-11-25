@@ -3,10 +3,18 @@
 import { spawn } from "bun"
 import { randomBytes } from "crypto"
 import z from "zod"
+import { readFile } from "fs/promises"
+import { join } from "path"
 // @ts-ignore
-import clientScript from "./on-client.fish" with { type: "text" }
+import clientScriptFish from "./on-client.fish" with { type: "text" }
 // @ts-ignore
 import setupDocumentation from "./SETUP.md" with { type: "text" }
+import { env } from "./src/env"
+import { findExecutables, resolvePath } from "./src/executables"
+
+const injectables = await findExecutables(env.ON_HOST_INJECTABLES)
+
+console.log(injectables)
 
 // Generate random token and port
 const token = randomBytes(32).toString("hex")
@@ -74,7 +82,30 @@ const server = Bun.serve({
     }
 
     if (url.pathname === "/activate/fish" && req.method === "GET") {
+      const aliases = injectables.map(
+        (injectable) =>
+          `alias ${injectable}='curl -fsSL -H "Authorization: $BACK_SSH_AUTHORIZATION" $BACK_SSH_ENDPOINT/injectable/${injectable} | fish'`
+      )
+      const clientScript = [clientScriptFish, ...aliases].join("\n")
+
       return new Response(clientScript, { status: 200, headers: { "Content-Type": "text/plain" } })
+    }
+
+    if (url.pathname.startsWith("/injectable/") && req.method === "GET") {
+      const injectableName = url.pathname.slice("/injectable/".length)
+
+      // Verify the injectable exists in our list (security check)
+      if (!injectables.includes(injectableName)) {
+        return new Response("Not Found", { status: 404 })
+      }
+
+      try {
+        const injectablePath = join(resolvePath(env.ON_HOST_INJECTABLES), injectableName)
+        const source = await readFile(injectablePath, "utf-8")
+        return new Response(source, { status: 200, headers: { "Content-Type": "text/plain" } })
+      } catch (error) {
+        return new Response("Error reading injectable", { status: 500 })
+      }
     }
 
     return new Response("Not Found", { status: 404 })
