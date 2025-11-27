@@ -1,9 +1,13 @@
 # Fish shell
 
-Add this to your `config.fish`:
+## Add to your config:
 
 ```sh
-if set -q ON_MY_BOX_ENDPOINT
-  curl -fsSL -H "Authorization: $ON_MY_BOX_AUTHORIZATION" $ON_MY_BOX_ENDPOINT/activate/fish | source
-end
+curl -fsSL $ON_MY_BOX_ENDPOINT/setup/fish >> ~/.config/fish/config.fish
+```
+
+### See the script:
+
+```sh
+curl -fsSL $ON_MY_BOX_ENDPOINT/setup/fish
 ```

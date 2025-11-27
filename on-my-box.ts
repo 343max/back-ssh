@@ -6,7 +6,7 @@ import z from "zod"
 import { readFile } from "fs/promises"
 import { join } from "path"
 // @ts-ignore
-import clientScriptFish from "./on-my-box.fn.fish" with { type: "text" }
+import clientScriptFish from "./src/on-my-box.fn.fish" with { type: "text" }
 // @ts-ignore
 import setupDocumentation from "./SETUP.md" with { type: "text" }
 import { env } from "./src/env"
@@ -32,6 +32,18 @@ const server = Bun.serve({
 
     if (url.pathname === "/" && req.method === "GET") {
       return new Response(setupDocumentation, { status: 200, headers: { "Content-Type": "text/markdown" } })
+    }
+
+    if (url.pathname === "/setup/fish" && req.method === "GET") {
+      const script = [
+        "",
+        "# setup on-my-box",
+        "if set -q ON_MY_BOX_ENDPOINT",
+        '  curl -fsSL -H "Authorization: $ON_MY_BOX_AUTHORIZATION" $ON_MY_BOX_ENDPOINT/activate/fish | source',
+        "end",
+      ].join("\n")
+
+      return new Response(script, { status: 200, headers: { "Content-Type": "text/plain" } })
     }
 
     if (auth !== token) {
