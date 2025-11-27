@@ -8,6 +8,8 @@ import { join } from "path"
 // @ts-ignore
 import clientScriptFish from "./src/on-my-box.fn.fish" with { type: "text" }
 // @ts-ignore
+import clientScriptBash from "./src/on-my-box.fn.bash" with { type: "text" }
+// @ts-ignore
 import setupDocumentation from "./SETUP.md" with { type: "text" }
 import { env } from "./src/env"
 import { findExecutables, resolvePath } from "./src/executables"
@@ -41,6 +43,20 @@ const server = Bun.serve({
         "if set -q ON_MY_BOX_ENDPOINT",
         '  curl -fsSL -H "Authorization: $ON_MY_BOX_AUTHORIZATION" $ON_MY_BOX_ENDPOINT/activate/fish | source',
         "end",
+        ""
+      ].join("\n")
+
+      return new Response(script, { status: 200, headers: { "Content-Type": "text/plain" } })
+    }
+
+    if (url.pathname === "/setup/bash" && req.method === "GET") {
+      const script = [
+        "",
+        "# setup on-my-box",
+        'if [ "$ON_MY_BOX_ENDPOINT" ]; then',
+        '  . <( curl -fsSL -H "Authorization: $ON_MY_BOX_AUTHORIZATION" $ON_MY_BOX_ENDPOINT/activate/bash)',
+        "fi",
+        ""
       ].join("\n")
 
       return new Response(script, { status: 200, headers: { "Content-Type": "text/plain" } })
@@ -94,9 +110,19 @@ const server = Bun.serve({
     if (url.pathname === "/activate/fish" && req.method === "GET") {
       const aliases = injectables.map(
         (injectable) =>
-          `alias ${injectable}='curl -fsSL -H "Authorization: $ON_MY_BOX_AUTHORIZATION" $ON_MY_BOX_ENDPOINT/injectable/${injectable} | fish'`
+          `alias ${injectable}='curl -fsSL -H "Authorization: $ON_MY_BOX_AUTHORIZATION" $ON_MY_BOX_ENDPOINT/activate/bash $ON_MY_BOX_ENDPOINT/injectable/${injectable} | bash -s -- "$argv"'`
       )
-      const clientScript = [clientScriptFish, ...aliases].join("\n")
+      const clientScript = [clientScriptFish, ...aliases, ""].join("\n")
+
+      return new Response(clientScript, { status: 200, headers: { "Content-Type": "text/plain" } })
+    }
+
+    if (url.pathname === "/activate/bash" && req.method === "GET") {
+      const aliases = injectables.map(
+        (injectable) =>
+          `alias ${injectable}='curl -fsSL -H "Authorization: $ON_MY_BOX_AUTHORIZATION" $ON_MY_BOX_ENDPOINT/activate/bash $ON_MY_BOX_ENDPOINT/injectable/${injectable} | bash -s -- "$@"'`
+      )
+      const clientScript = [clientScriptBash, ...aliases, ""].join("\n")
 
       return new Response(clientScript, { status: 200, headers: { "Content-Type": "text/plain" } })
     }

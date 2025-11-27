@@ -14,7 +14,7 @@ you can write a script that allows you to run the equivalent to `code .` to open
 WORKSPACE="$(cd "${1:-$PWD}" && pwd -P)"
 HOSTNAME="$(echo "$SSH_CONNECTION" | awk '{print $3}')"
 
-on-host open "vscode://vscode-remote/ssh-remote+$USER@$HOSTNAME$WORKSPACE?windowId=_blank"
+on-my-box open "vscode://vscode-remote/ssh-remote+$USER@$HOSTNAME$WORKSPACE?windowId=_blank"
 ```
 
 here is the same thing for Zod if you prefer:
@@ -23,7 +23,7 @@ here is the same thing for Zod if you prefer:
 WORKSPACE="$(cd "${1:-$PWD}" && pwd -P)"
 HOSTNAME="$(echo "$SSH_CONNECTION" | awk '{print $3}')"
 
-on-host open "zed://ssh/$USER@$HOSTNAME$WORKSPACE"
+on-my-box open "zed://ssh/$USER@$HOSTNAME$WORKSPACE"
 ```
 
 or a script that mounts the current directory on your host machine using `rclone`:
@@ -32,8 +32,8 @@ or a script that mounts the current directory on your host machine using `rclone
 WORKSPACE="$(cd "${1:-$PWD}" && pwd -P)"
 USER="$(on-my-box whoami)
 
-on-host open "/Users/$USER$/mnt"
-on-host rclone mount server:$WORKSPACE "/Users/$USER$/mnt"
+on-my-box open "/Users/$USER$/mnt"
+on-my-box rclone mount server:$WORKSPACE "/Users/$USER$/mnt"
 ```
 
 ## Setup
